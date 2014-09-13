@@ -10,36 +10,39 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	config.vm.box = "chef/centos-6.5"
 	
 	# Two web servers
-	(1..2).each do |i|
+	(101..102).each do |i|
   		config.vm.define "web#{i}" do |web|
       		web.vm.hostname = "web#{i}"
-      		web.vm.network :private_network, ip: "192.168.3.#{i}"
+      		web.vm.network :private_network, ip: "172.16.0.#{i}"
   		end
   	end
   	
   	# Database servers
-  	config.vm.define "db1" do |db1|
-		db1.vm.hostname = "db1"
-		db1.vm.network :private_network, ip: "192.168.4.1"
+  	config.vm.define "db" do |db|
+		db.vm.hostname = "db"
+		db.vm.network :private_network, ip: "172.16.0.103"
   	end
   	
   	# Load Balancers
-  	config.vm.define "lb1" do |lb1|
-		lb1.vm.hostname = "lb1"
-		lb1.vm.network :private_network, ip: "192.168.5.1"
+  	config.vm.define "lb" do |lb|
+		lb.vm.hostname = "lb"
+		lb.vm.network :private_network, ip: "172.16.0.104"
   	end
   	
   	# Monitoring / Nagios
   	config.vm.define "nagios" do |nagios|
 		nagios.vm.hostname = "nagios"
-		nagios.vm.network :private_network, ip: "192.168.6.1"
+		nagios.vm.network :private_network, ip: "172.16.0.105"
+		
+		# Provisioning only on last machine since ansible deals with multiple hosts
+		# See https://github.com/mitchellh/vagrant/issues/1784
+  		nagios.vm.provision :ansible do |ansible|
+    		ansible.playbook = "provisioning/site.yml"
+    		ansible.inventory_path = "provisioning/inventory"
+    		ansible.sudo = true
+			ansible.verbose = "vvv"
+  		end
+		
   	end
   	
-  	# Provisioning with Ansible
-  	config.vm.provision "ansible" do |ansible|
-		ansible.playbook = "site.yml"
-		ansible.sudo = true
-	end
-  	
-	
 end
